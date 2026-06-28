@@ -1,0 +1,321 @@
+<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;background:#111;font-family:'Vazirmatn',Tahoma,sans-serif;overflow-x:hidden}
+.screen{max-width:390px;margin:0 auto;background:#fff;min-height:100vh}
+
+/* ===== هیرو: عکس تمام صفحه ===== */
+.hero{position:relative;width:100%;height:100vh;max-height:720px;overflow:hidden;user-select:none}
+.hero-slides{width:100%;height:100%;position:relative}
+.hslide{position:absolute;inset:0;opacity:0;transition:opacity .35s;display:flex;align-items:center;justify-content:center}
+.hslide.act{opacity:1;z-index:1}
+.hslide img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.hslide-ph{width:100%;height:100%;background:linear-gradient(135deg,#2a3a2a,#1a2a1a);display:flex;align-items:center;justify-content:center;font-size:64px}
+
+/* گرادیان */
+.hero-grad{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,.0) 55%,rgba(0,0,0,.75) 82%,rgba(0,0,0,.92) 100%);z-index:2;pointer-events:none}
+
+/* topbar */
+.topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;padding:14px 16px;z-index:10}
+.topbar .back{font-size:22px;color:#fff;cursor:pointer;margin-left:8px}
+.topbar .ttl{font-size:15px;font-weight:600;color:#fff;flex:1}
+.topbar .sh{font-size:20px;color:#fff;cursor:pointer}
+
+/* نقاط slider */
+.hdots{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:10}
+.hdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .2s}
+.hdot.act{background:#fff}
+
+/* کتیبه روی عکس */
+.hero-quote{position:absolute;bottom:140px;left:16px;right:16px;z-index:5;pointer-events:none}
+.hq-line{width:28px;height:2px;background:rgba(255,255,255,.5);margin-bottom:8px}
+.hq-text{font-size:12.5px;color:rgba(255,255,255,.85);line-height:1.9;font-style:italic;font-weight:300}
+
+/* اطلاعات روی عکس پایین */
+.hero-info{position:absolute;bottom:0;left:0;right:0;padding:12px 16px 18px;z-index:5}
+.hero-badge{font-size:11px;color:#ffaaaa;font-weight:700;margin-bottom:3px;letter-spacing:.5px}
+.hero-name{font-size:26px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:3px}
+.hero-loc{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:14px}
+
+/* آیکون‌ها روی عکس */
+.hero-actions{display:flex;align-items:center;gap:20px}
+.ha{display:flex;align-items:center;gap:6px;cursor:pointer;position:relative}
+.ha:active{opacity:.7}
+.ha-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.ha-icon img{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1)}
+.ha-num{font-size:12px;color:rgba(255,255,255,.9);font-weight:600}
+.ha.active .ha-icon{animation:bounce .35s ease}
+.ha.active .ha-icon img{filter:brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(310deg)}
+@keyframes bounce{0%{transform:scale(1)}40%{transform:scale(1.4)}70%{transform:scale(.9)}100%{transform:scale(1)}}
+.ha-sep{flex:1}
+.ha-share{font-size:20px;color:rgba(255,255,255,.8);cursor:pointer}
+
+/* فلش پایین */
+.scroll-hint{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:18px;color:rgba(255,255,255,.4);padding-bottom:4px;animation:bob 1.8s infinite}
+@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(5px)}}
+
+/* ===== بخش اطلاعات ===== */
+.detail{background:#fff;border-radius:20px 20px 0 0;margin-top:-20px;position:relative;z-index:10}
+
+.section{padding:16px 18px;border-bottom:1px solid #f0f0f0}
+.sec-title{font-size:9.5px;color:#ccc;font-weight:700;letter-spacing:.6px;margin-bottom:10px}
+
+/* timeline اطلاعات */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;padding-right:18px}
+.timeline::before{content:'';position:absolute;right:5px;top:6px;bottom:6px;width:1.5px;background:#f0f0f0}
+.tl-item{display:flex;align-items:flex-start;gap:12px;padding:5px 0;position:relative}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid #ddd;flex-shrink:0;position:absolute;right:-23px;top:7px}
+.tl-dot.birth{border-color:#4CAF50}
+.tl-dot.death{border-color:#e53935}
+.tl-lbl{font-size:10px;color:#bbb;min-width:70px;padding-top:1px}
+.tl-val{font-size:12px;color:#222;font-weight:600;line-height:1.5}
+
+.ketibe-box{margin:0 18px 14px;background:#f7f9f5;border-radius:10px;padding:12px 14px;border-right:3px solid #697a60}
+.ketibe-box .kt{font-size:9px;color:#aaa;font-weight:700;letter-spacing:.3px;margin-bottom:5px}
+.ketibe-box .kv{font-size:12.5px;color:#333;line-height:1.8;font-style:italic}
+
+/* تب‌ها */
+.tabs{display:flex;border-bottom:1px solid #eee;padding:0 18px;overflow-x:auto;position:sticky;top:0;background:#fff;z-index:10}
+.tb{flex-shrink:0;padding:10px 10px;font-size:11px;color:#aaa;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap}
+.tb.act{color:#185FA5;border-bottom-color:#185FA5;font-weight:700}
+
+.tab-pane{display:none}
+.tab-pane.act{display:block}
+
+/* نقشه */
+.map-wrap{height:250px;background:#e2ebe2;position:relative;overflow:hidden}
+.mgrid{position:absolute;inset:0;background-image:linear-gradient(rgba(80,110,80,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(80,110,80,.1) 1px,transparent 1px);background-size:26px 26px}
+.mrd{position:absolute;background:rgba(255,255,255,.6)}
+.mpulse{position:absolute;top:50%;right:47%;transform:translate(50%,-50%);width:34px;height:34px;border-radius:50%;background:rgba(24,95,165,.12);border:1px solid rgba(24,95,165,.2)}
+.mpin{position:absolute;top:50%;right:47%;transform:translate(50%,-100%);display:flex;flex-direction:column;align-items:center}
+.mpin-dot{width:13px;height:13px;background:#185FA5;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.mpin-stem{width:2px;height:7px;background:#185FA5}
+.nav-btn{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#185FA5;color:#fff;border-radius:24px;padding:9px 24px;font-size:13px;font-family:'Vazirmatn',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 3px 12px rgba(24,95,165,.35)}
+
+.tc{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.wbox{background:#f4f8ff;border-radius:12px;padding:14px 16px;font-size:13px;color:#222;line-height:2;border-right:3px solid #185FA5}
+.audio{display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:12px;padding:10px 14px}
+.track{flex:1;height:3px;background:#eee;border-radius:2px;position:relative}
+.track::before{content:'';position:absolute;right:0;top:0;height:100%;width:32%;background:#185FA5;border-radius:2px}
+.biobox{background:#fffdf5;border-radius:12px;padding:14px 16px;font-size:13px;color:#333;line-height:1.9;border-right:3px solid #c8a84b}
+.bio-row{background:#f8f8f8;border-radius:10px;padding:10px 14px}
+.bio-row .bt{font-size:9px;color:#aaa;font-weight:700;letter-spacing:.3px;margin-bottom:4px}
+.bio-row .bv{font-size:12px;color:#333;line-height:1.7}
+.mem{display:flex;gap:10px}
+.mav{width:32px;height:32px;border-radius:50%;background:#ededfc;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.mbody{flex:1;background:#f8f8f8;border-radius:12px;padding:10px 12px}
+.mname{font-size:10.5px;color:#aaa;margin-bottom:4px;font-weight:600}
+.mtext{font-size:12px;color:#333;line-height:1.7}
+.add-mem{border:1.5px dashed #ddd;border-radius:12px;padding:12px;text-align:center;font-size:12px;color:#bbb;cursor:pointer}
+
+/* lightbox */
+.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:100;flex-direction:column;align-items:center;justify-content:center}
+.lb.show{display:flex}
+.lb-slides{width:100%;flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+.lb-slide{display:none;width:100%;height:100%;align-items:center;justify-content:center}
+.lb-slide.act{display:flex}
+.lb-slide img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px}
+.lb-slide-ph{font-size:72px}
+.lb-close{position:absolute;top:16px;left:16px;color:#fff;font-size:26px;cursor:pointer;background:none;border:none;z-index:10;opacity:.8}
+.lb-arrows{display:flex;gap:16px;padding:14px 0}
+.lb-arr{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lb-counter{color:rgba(255,255,255,.45);font-size:12px;padding-bottom:10px}
+</style></head><body>
+<div class="screen">
+
+  <div class="hero" id="hero">
+    <div class="hero-slides" id="heroSlides">
+      <div class="hslide act" id="hs-0">
+        <img src="mazaar_photo.webp" alt="مزار شهیده">
+      </div>
+      <div class="hslide" id="hs-1"><div class="hslide-ph">🖼️</div></div>
+      <div class="hslide" id="hs-2"><div class="hslide-ph">🖼️</div></div>
+      <div class="hslide" id="hs-3"><div class="hslide-ph">🖼️</div></div>
+    </div>
+
+    <div class="hero-grad"></div>
+
+    <div class="topbar">
+      <span class="back">←</span>
+      <span class="ttl">مشخصات مزار</span>
+      <span class="sh">↗</span>
+    </div>
+
+    <div class="hdots" id="hdots">
+      <div class="hdot act"></div><div class="hdot"></div><div class="hdot"></div><div class="hdot"></div>
+    </div>
+
+    <!-- کتیبه روی عکس -->
+    <div class="hero-quote">
+      <div class="hq-line"></div>
+      <div class="hq-text">یاس نجیب باغی در خاک و خون تپیده<br>از نسل پاک زهراست این بانوی شهیده</div>
+    </div>
+
+    <!-- اسم + آیکون‌ها -->
+    <div class="hero-info">
+      <div class="hero-badge">🌹 شهیده</div>
+      <div class="hero-name">زهره سادات حسینی</div>
+      <div class="hero-loc">📍 تهران — گلزار شهدا</div>
+      <div class="hero-actions">
+        <div class="ha" id="ha-fateha" onclick="togAction('fateha')">
+          <div class="ha-icon"><img src="icon_fateha.png" alt="فاتحه"></div>
+          <span class="ha-num" id="n-fateha">۱۲۵</span>
+        </div>
+        <div class="ha" id="ha-visit" onclick="togAction('visit')">
+          <div class="ha-icon"><img src="icon_visit.png" alt="بازدید"></div>
+          <span class="ha-num" id="n-visit">۲۰</span>
+        </div>
+        <div class="ha" id="ha-comment" onclick="togAction('comment')">
+          <div class="ha-icon"><img src="icon_comment.png" alt="خاطره"></div>
+          <span class="ha-num" id="n-comment">۳۰</span>
+        </div>
+        <div class="ha-sep"></div>
+        <div class="ha-share">↗</div>
+      </div>
+    </div>
+
+    <div class="scroll-hint">↓</div>
+  </div>
+
+  <!-- اطلاعات -->
+  <div class="detail">
+    <div class="section">
+      <div class="sec-title">مشخصات</div>
+      <div class="timeline">
+        <div class="tl-item"><span class="tl-lbl">ولادت</span><span class="tl-val">۰۹ آذر ۱۳۶۰ — تهران</span><div class="tl-dot birth"></div></div>
+        <div class="tl-item"><span class="tl-lbl">شهادت</span><span class="tl-val">۰۲ تیر ۱۴۰۴ — تهران</span><div class="tl-dot death"></div></div>
+        <div class="tl-item"><span class="tl-lbl">محل شهادت</span><span class="tl-val">به دست رژیم صهیونیستی</span><div class="tl-dot"></div></div>
+        <div class="tl-item"><span class="tl-lbl">فرزند</span><span class="tl-val">سید رحیم</span><div class="tl-dot"></div></div>
+        <div class="tl-item"><span class="tl-lbl">کشور</span><span class="tl-val">🇮🇷 ایران</span><div class="tl-dot"></div></div>
+      </div>
+    </div>
+
+    <div style="padding:14px 18px 0">
+      <div class="ketibe-box">
+        <div class="kt">کتیبه مزار</div>
+        <div class="kv">یاس نجیب باغی در خاک و خون تپیده، از نسل پاک زهراست این بانوی شهیده، در خیمه‌ی شهادت ره برده تا سعادت، ازداغ آن شهیده خون می‌رود زدیده.</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tb act" onclick="showTab('map',this)">🗺 نقشه</div>
+      <div class="tb" onclick="showTab('bio',this)">📖 زندگی‌نامه</div>
+      <div class="tb" onclick="showTab('wasiyat',this)">📜 وصیت‌نامه</div>
+      <div class="tb" onclick="showTab('memory',this)">💬 خاطرات</div>
+    </div>
+
+    <div id="tab-map" class="tab-pane act">
+      <div class="map-wrap">
+        <div class="mgrid"></div>
+        <div class="mrd" style="top:43%;left:0;right:0;height:3px"></div>
+        <div class="mrd" style="top:66%;left:0;right:0;height:1.5px;opacity:.4"></div>
+        <div class="mrd" style="right:38%;top:0;bottom:0;width:3px"></div>
+        <div class="mpulse"></div>
+        <div class="mpin"><div class="mpin-dot"></div><div class="mpin-stem"></div></div>
+        <div class="nav-btn">🧭 شروع مسیریابی</div>
+      </div>
+    </div>
+
+    <div id="tab-bio" class="tab-pane">
+      <div class="tc">
+        <div class="biobox">زهره سادات حسینی فرزند سید رحیم، بانوی شهیده‌ای که در سال ۱۳۶۰ در تهران متولد شد. زندگی پاک و سرشار از ایمان او سرانجام به فیض شهادت رسید.</div>
+        <div class="bio-row"><div class="bt">تحصیلات</div><div class="bv">کارشناسی ارشد</div></div>
+        <div class="bio-row"><div class="bt">خانواده</div><div class="bv">فرزند سید رحیم</div></div>
+      </div>
+    </div>
+
+    <div id="tab-wasiyat" class="tab-pane">
+      <div class="tc">
+        <div class="wbox">وصیت‌نامه این شهیده در حال بارگذاری است...</div>
+        <div class="audio"><span style="font-size:20px">▶️</span><div class="track"></div><span style="font-size:11px;color:#aaa">--:--</span></div>
+      </div>
+    </div>
+
+    <div id="tab-memory" class="tab-pane">
+      <div class="tc">
+        <div class="mem"><div class="mav">👤</div><div class="mbody"><div class="mname">زائر — خرداد ۱۴۰۵</div><div class="mtext">سر مزارشان رفتم. آدم احساس آرامش عجیبی می‌کنه. روحشان شاد.</div></div></div>
+        <div class="add-mem">+ افزودن خاطره</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- lightbox -->
+<div class="lb" id="lb">
+  <button class="lb-close" onclick="closeLb()">✕</button>
+  <div class="lb-slides">
+    <div class="lb-slide act" id="lb-0"><img src="mazaar_photo.webp" alt="مزار"></div>
+    <div class="lb-slide" id="lb-1"><div class="lb-slide-ph">🖼️</div></div>
+    <div class="lb-slide" id="lb-2"><div class="lb-slide-ph">🖼️</div></div>
+    <div class="lb-slide" id="lb-3"><div class="lb-slide-ph">🖼️</div></div>
+  </div>
+  <div class="lb-arrows">
+    <button class="lb-arr" onclick="lbPrev()">›</button>
+    <button class="lb-arr" onclick="lbNext()">‹</button>
+  </div>
+  <div class="lb-counter" id="lb-cnt">۱ از ۴</div>
+</div>
+
+<script>
+// ===== Hero Slider =====
+let hCur=0, hTotal=4, hTx=0;
+function goH(n){
+  document.getElementById('hs-'+hCur).classList.remove('act');
+  hCur=(n+hTotal)%hTotal;
+  document.getElementById('hs-'+hCur).classList.add('act');
+  document.querySelectorAll('.hdot').forEach((d,i)=>d.classList.toggle('act',i===hCur));
+}
+const hero=document.getElementById('hero');
+hero.addEventListener('touchstart',e=>{hTx=e.touches[0].clientX},{passive:true});
+hero.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-hTx;
+  if(Math.abs(dx)>40){dx>0?goH(hCur-1):goH(hCur+1)}
+  else if(Math.abs(dx)<8){openLb(hCur)} // کلیک = باز کن lightbox
+});
+
+// ===== Lightbox =====
+let lbCur=0, lbTotal=4, lbTx=0;
+const faNum=['۱','۲','۳','۴'];
+function openLb(i){lbCur=i||0;updLb();document.getElementById('lb').classList.add('show')}
+function closeLb(){document.getElementById('lb').classList.remove('show')}
+function lbNext(){lbCur=(lbCur+1)%lbTotal;updLb()}
+function lbPrev(){lbCur=(lbCur-1+lbTotal)%lbTotal;updLb()}
+function updLb(){
+  document.querySelectorAll('.lb-slide').forEach((s,i)=>s.classList.toggle('act',i===lbCur));
+  document.getElementById('lb-cnt').textContent=faNum[lbCur]+' از ۴';
+}
+const lb=document.getElementById('lb');
+lb.addEventListener('touchstart',e=>{lbTx=e.touches[0].clientX},{passive:true});
+lb.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-lbTx;
+  if(Math.abs(dx)>40){dx>0?lbPrev():lbNext()}
+});
+
+// ===== Actions =====
+const st={fateha:false,visit:false,comment:false};
+const base={fateha:125,visit:20,comment:30};
+function toFa(n){return n.toString().replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])}
+function togAction(k){
+  st[k]=!st[k];
+  const el=document.getElementById('ha-'+k);
+  el.classList.toggle('active',st[k]);
+  document.getElementById('n-'+k).textContent=toFa(st[k]?base[k]+1:base[k]);
+  // انیمیشن bounce
+  const icon=el.querySelector('.ha-icon');
+  icon.style.animation='none';
+  setTimeout(()=>{icon.style.animation=''},10);
+  void icon.offsetWidth;
+  icon.style.animation='bounce .35s ease';
+}
+
+// ===== Tabs =====
+function showTab(name,el){
+  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('act'));
+  document.getElementById('tab-'+name).classList.add('act');
+  document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act'));
+  if(el)el.classList.add('act');
+}
+</script>
+</body></html>

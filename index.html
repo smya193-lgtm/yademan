@@ -1,321 +1,835 @@
 <!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;background:#111;font-family:'Vazirmatn',Tahoma,sans-serif;overflow-x:hidden}
-.screen{max-width:390px;margin:0 auto;background:#fff;min-height:100vh}
+html,body{width:100%;height:100%;background:#111;font-family:'Vazirmatn',Tahoma,sans-serif;overflow:hidden}
+.screen{max-width:390px;margin:0 auto;background:#f5f5f5;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* ===== هیرو: عکس تمام صفحه ===== */
-.hero{position:relative;width:100%;height:100vh;max-height:720px;overflow:hidden;user-select:none}
+/* SVG آیکون‌ها */
+.ico{display:flex;align-items:center;justify-content:center}
+
+/* صفحات */
+.page{display:none;flex:1;flex-direction:column;overflow:hidden}
+.page.act{display:flex}
+
+/* ===== منوی پایین ===== */
+.bottom-nav{display:flex;border-top:1px solid #eee;background:#fff;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0 6px;cursor:pointer;border:none;background:none}
+.bn svg{color:#bbb;transition:color .2s}
+.bn span{font-size:9px;color:#bbb;transition:color .2s}
+.bn.act svg,.bn.act span{color:#185FA5}
+
+/* ===== صفحه اصلی ===== */
+#page-home{overflow:hidden}
+.home-topbar{padding:12px 16px;background:#fff;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;flex-shrink:0}
+.app-title{font-size:17px;font-weight:900;color:#111;letter-spacing:-.3px}
+.topbar-icons{display:flex;gap:14px;align-items:center}
+.topbar-icons button{background:none;border:none;cursor:pointer;color:#555;display:flex;align-items:center;padding:0}
+
+.home-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* نقشه کوچک */
+.map-wrap{height:200px;background:#e4ede4;position:relative;overflow:hidden;flex-shrink:0}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(80,110,80,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(80,110,80,.1) 1px,transparent 1px);background-size:26px 26px}
+.map-road{position:absolute;background:rgba(255,255,255,.6)}
+.user-pulse{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:rgba(24,95,165,.12);border:1px solid rgba(24,95,165,.2)}
+.user-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#185FA5;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}
+.mode-bar{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:4px}
+.mode-btn{width:32px;height:32px;border-radius:8px;background:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12);color:#666}
+.mode-btn.act{background:#185FA5;color:#fff}
+.radius-lbl{position:absolute;bottom:7px;left:8px;background:rgba(255,255,255,.92);border-radius:6px;padding:3px 8px;font-size:10px;color:#555}
+.map-pins{position:absolute;inset:0;pointer-events:none}
+.mpin{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;pointer-events:all;cursor:pointer}
+.mpin-lbl{font-size:8.5px;padding:2px 6px;border-radius:8px;white-space:nowrap;font-weight:600}
+.mpin-dot{width:7px;height:7px;border-radius:50%;border:1.5px solid #fff;margin-top:1px}
+.mpin-p .mpin-lbl{background:#533AB7;color:#EEEDFE}
+.mpin-p .mpin-dot{background:#533AB7}
+.mpin-r .mpin-lbl{background:#A32D2D;color:#FCEBEB}
+.mpin-r .mpin-dot{background:#A32D2D}
+
+/* جستجو */
+.search-wrap{padding:10px 14px;background:#fff;border-bottom:1px solid #f0f0f0}
+.search-box{display:flex;align-items:center;gap:8px;background:#f5f5f5;border-radius:20px;padding:8px 14px}
+.search-box input{flex:1;border:none;outline:none;background:transparent;font-size:13px;font-family:'Vazirmatn',sans-serif;color:#333}
+.search-box svg{color:#bbb;flex-shrink:0}
+
+/* کارت‌های بخش */
+.section-wrap{padding:14px}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-size:13px;font-weight:700;color:#111}
+.sec-more{font-size:11px;color:#185FA5;cursor:pointer}
+
+/* نزدیک‌ترین مزارها */
+.nearby-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.nearby-item:last-child{border-bottom:none}
+.ni-av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ni-av-p{background:#EEEDFE;color:#533AB7}
+.ni-av-r{background:#FCEBEB;color:#A32D2D}
+.ni-name{font-size:12.5px;color:#111;font-weight:600}
+.ni-sub{font-size:10px;color:#aaa}
+.ni-dist{font-size:10.5px;color:#aaa;flex-shrink:0;margin-right:auto}
+
+/* تقویم */
+.cal-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.cal-card{flex-shrink:0;width:130px;background:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.cal-type{font-size:9px;font-weight:700;color:#aaa;margin-bottom:4px;letter-spacing:.3px}
+.cal-name{font-size:12px;font-weight:600;color:#111;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-date{font-size:10px;color:#bbb}
+.cal-card.birth .cal-type{color:#4CAF50}
+.cal-card.death .cal-type{color:#e53935}
+
+/* وصیت منتخب */
+.will-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-right:3px solid #185FA5}
+.will-text{font-size:12px;color:#333;line-height:1.9;font-style:italic;margin-bottom:8px}
+.will-author{font-size:10.5px;color:#aaa;font-weight:600}
+
+/* اخبار */
+.news-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5;cursor:pointer}
+.news-item:last-child{border-bottom:none}
+.news-img{width:60px;height:60px;border-radius:10px;background:#e8e8e8;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#ccc}
+.news-title{font-size:12px;font-weight:600;color:#111;line-height:1.5;margin-bottom:4px}
+.news-date{font-size:10px;color:#bbb}
+.news-tag{font-size:9px;padding:2px 7px;border-radius:10px;background:#EEF4FC;color:#185FA5;font-weight:600;display:inline-block;margin-bottom:4px}
+
+/* گلزارها */
+.golzar-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.golzar-card{flex-shrink:0;width:120px;background:#fff;border-radius:12px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.07);text-align:center}
+.golzar-icon{width:40px;height:40px;border-radius:10px;background:#f0f4f0;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;color:#697a60}
+.golzar-name{font-size:11px;font-weight:600;color:#111;margin-bottom:2px}
+.golzar-count{font-size:10px;color:#aaa}
+
+/* آمار */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07);text-align:center}
+.stat-num{font-size:22px;font-weight:900;color:#185FA5;margin-bottom:3px}
+.stat-label{font-size:10.5px;color:#aaa}
+
+/* ===== صفحه مزار ===== */
+#page-mazaar{overflow-y:auto}
+.hero{position:relative;width:100%;height:100vh;max-height:720px;overflow:hidden}
 .hero-slides{width:100%;height:100%;position:relative}
-.hslide{position:absolute;inset:0;opacity:0;transition:opacity .35s;display:flex;align-items:center;justify-content:center}
+.hslide{position:absolute;inset:0;opacity:0;transition:opacity .35s}
 .hslide.act{opacity:1;z-index:1}
 .hslide img{width:100%;height:100%;object-fit:cover;object-position:center top}
-.hslide-ph{width:100%;height:100%;background:linear-gradient(135deg,#2a3a2a,#1a2a1a);display:flex;align-items:center;justify-content:center;font-size:64px}
-
-/* گرادیان */
-.hero-grad{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,.0) 55%,rgba(0,0,0,.75) 82%,rgba(0,0,0,.92) 100%);z-index:2;pointer-events:none}
-
-/* topbar */
-.topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;padding:14px 16px;z-index:10}
-.topbar .back{font-size:22px;color:#fff;cursor:pointer;margin-left:8px}
-.topbar .ttl{font-size:15px;font-weight:600;color:#fff;flex:1}
-.topbar .sh{font-size:20px;color:#fff;cursor:pointer}
-
-/* نقاط slider */
+.hslide-ph{width:100%;height:100%;background:linear-gradient(135deg,#2a3a2a,#1a2a1a);display:flex;align-items:center;justify-content:center}
+.stone{width:110px;height:158px;background:#697a60;border-radius:55px 55px 4px 4px/38px 38px 4px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:2px solid #4a5e41}
+.stone .ar{font-size:7px;color:#ddeedd;opacity:.85;text-align:center;padding:0 5px;line-height:1.5}
+.stone .nm{font-size:11px;color:#fff;font-weight:700;text-align:center;line-height:1.4}
+.stone .dt{font-size:8px;color:#b8ccb8}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.25) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,0) 55%,rgba(0,0,0,.75) 82%,rgba(0,0,0,.92) 100%);z-index:2;pointer-events:none}
+.hero-topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;padding:14px 16px;z-index:10}
+.hero-topbar button{background:none;border:none;cursor:pointer;color:#fff;display:flex;align-items:center;padding:0}
+.htitle{font-size:15px;font-weight:600;color:#fff;flex:1;margin:0 8px}
 .hdots{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:10}
-.hdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.35);transition:background .2s}
+.hdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.35)}
 .hdot.act{background:#fff}
-
-/* کتیبه روی عکس */
-.hero-quote{position:absolute;bottom:140px;left:16px;right:16px;z-index:5;pointer-events:none}
+.hero-quote{position:absolute;bottom:148px;left:16px;right:16px;z-index:5;pointer-events:none}
 .hq-line{width:28px;height:2px;background:rgba(255,255,255,.5);margin-bottom:8px}
-.hq-text{font-size:12.5px;color:rgba(255,255,255,.85);line-height:1.9;font-style:italic;font-weight:300}
-
-/* اطلاعات روی عکس پایین */
+.hq-text{font-size:12px;color:rgba(255,255,255,.82);line-height:1.9;font-style:italic;font-weight:300}
 .hero-info{position:absolute;bottom:0;left:0;right:0;padding:12px 16px 18px;z-index:5}
 .hero-badge{font-size:11px;color:#ffaaaa;font-weight:700;margin-bottom:3px;letter-spacing:.5px}
 .hero-name{font-size:26px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:3px}
 .hero-loc{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:14px}
-
-/* آیکون‌ها روی عکس */
-.hero-actions{display:flex;align-items:center;gap:20px}
-.ha{display:flex;align-items:center;gap:6px;cursor:pointer;position:relative}
+.hero-actions{display:flex;align-items:center;gap:18px}
+.ha{display:flex;align-items:center;gap:5px;cursor:pointer;color:#fff}
 .ha:active{opacity:.7}
-.ha-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;transition:transform .15s}
-.ha-icon img{width:100%;height:100%;object-fit:contain;filter:brightness(0) invert(1)}
 .ha-num{font-size:12px;color:rgba(255,255,255,.9);font-weight:600}
-.ha.active .ha-icon{animation:bounce .35s ease}
-.ha.active .ha-icon img{filter:brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(310deg)}
-@keyframes bounce{0%{transform:scale(1)}40%{transform:scale(1.4)}70%{transform:scale(.9)}100%{transform:scale(1)}}
 .ha-sep{flex:1}
-.ha-share{font-size:20px;color:rgba(255,255,255,.8);cursor:pointer}
-
-/* فلش پایین */
-.scroll-hint{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:18px;color:rgba(255,255,255,.4);padding-bottom:4px;animation:bob 1.8s infinite}
-@keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(5px)}}
-
-/* ===== بخش اطلاعات ===== */
+.scroll-hint{text-align:center;color:rgba(255,255,255,.4);animation:bob 1.8s infinite;padding-bottom:4px;display:flex;justify-content:center}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 .detail{background:#fff;border-radius:20px 20px 0 0;margin-top:-20px;position:relative;z-index:10}
+.det-section{padding:14px 16px;border-bottom:1px solid #f0f0f0}
+.det-title{font-size:9.5px;color:#ccc;font-weight:700;letter-spacing:.5px;margin-bottom:10px}
+.tl-item{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f8f8f8}
+.tl-item:last-child{border-bottom:none}
+.tl-lbl{font-size:10.5px;color:#bbb}
+.tl-val{font-size:11.5px;color:#222;font-weight:600}
+.ketibe-box{margin:10px 16px;background:#f7f9f5;border-radius:10px;padding:10px 14px;border-right:3px solid #697a60}
+.kb-title{font-size:9px;color:#aaa;font-weight:700;margin-bottom:4px}
+.kb-text{font-size:12px;color:#333;line-height:1.8;font-style:italic}
+.det-tabs{display:flex;padding:0 16px;border-bottom:1px solid #eee;overflow-x:auto}
+.dt{flex-shrink:0;padding:10px 10px;font-size:11px;color:#aaa;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.dt.act{color:#185FA5;border-bottom-color:#185FA5;font-weight:700}
+.dt-pane{display:none;padding:14px 16px}
+.dt-pane.act{display:block}
+.map-mini{height:200px;background:#e2ebe2;position:relative;overflow:hidden;border-radius:10px;margin-bottom:10px}
+.nav-float{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#185FA5;color:#fff;border-radius:22px;padding:8px 20px;font-size:12px;font-family:'Vazirmatn',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 2px 10px rgba(24,95,165,.35);display:flex;align-items:center;gap:6px}
+.bio-box{background:#fffdf5;border-radius:10px;padding:12px 14px;font-size:12px;color:#333;line-height:1.9;border-right:3px solid #c8a84b;margin-bottom:10px}
+.will-box-d{background:#f4f8ff;border-radius:10px;padding:12px 14px;font-size:12px;color:#222;line-height:2;border-right:3px solid #185FA5;margin-bottom:10px}
+.mem-item{display:flex;gap:10px;margin-bottom:10px}
+.mem-av{width:30px;height:30px;border-radius:50%;background:#ededfc;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#534AB7}
+.mem-body{flex:1;background:#f8f8f8;border-radius:10px;padding:8px 10px}
+.mem-name{font-size:10px;color:#aaa;margin-bottom:3px}
+.mem-text{font-size:12px;color:#333;line-height:1.7}
 
-.section{padding:16px 18px;border-bottom:1px solid #f0f0f0}
-.sec-title{font-size:9.5px;color:#ccc;font-weight:700;letter-spacing:.6px;margin-bottom:10px}
+/* صفحه‌های غیرفعال */
+.coming-soon{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#ccc;padding:40px}
+.coming-soon svg{color:#ddd}
+.coming-soon h3{font-size:16px;color:#aaa;font-weight:600}
+.coming-soon p{font-size:13px;text-align:center;line-height:1.7}
 
-/* timeline اطلاعات */
-.timeline{display:flex;flex-direction:column;gap:0;position:relative;padding-right:18px}
-.timeline::before{content:'';position:absolute;right:5px;top:6px;bottom:6px;width:1.5px;background:#f0f0f0}
-.tl-item{display:flex;align-items:flex-start;gap:12px;padding:5px 0;position:relative}
-.tl-dot{width:11px;height:11px;border-radius:50%;background:#fff;border:2px solid #ddd;flex-shrink:0;position:absolute;right:-23px;top:7px}
-.tl-dot.birth{border-color:#4CAF50}
-.tl-dot.death{border-color:#e53935}
-.tl-lbl{font-size:10px;color:#bbb;min-width:70px;padding-top:1px}
-.tl-val{font-size:12px;color:#222;font-weight:600;line-height:1.5}
+/* ===== صفحه ثبت ===== */
+#page-add{overflow-y:auto;background:#f5f5f5}
+.form-topbar{padding:13px 16px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.form-body{padding:14px;padding-bottom:100px}
+.form-section{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:12px}
+.form-sec-title{padding:12px 16px 8px;font-size:11px;font-weight:700;color:#888;border-bottom:1px solid #f5f5f5}
+.form-field{padding:11px 16px;border-bottom:1px solid #f5f5f5}
+.form-field:last-child{border-bottom:none}
+.form-field-row{padding:11px 16px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:10px}
+.form-field-row:last-child{border-bottom:none}
+.flbl{font-size:10px;color:#aaa;margin-bottom:4px;font-weight:600}
+.finp{width:100%;border:none;outline:none;font-size:13.5px;font-family:'Vazirmatn',sans-serif;color:#222;background:transparent}
+.finp::placeholder{color:#ccc}
+.finp-inline{flex:1;border:none;outline:none;font-size:13px;font-family:'Vazirmatn',sans-serif;color:#222;background:transparent}
+select.finp-inline{-webkit-appearance:none;cursor:pointer}
+.dg-chip{padding:6px 13px;border-radius:20px;font-size:11px;border:1px solid #e8e8e8;color:#666;cursor:pointer;font-family:'Vazirmatn',sans-serif;background:#fff;transition:all .15s}
+.dg-chip.selected{background:#185FA5;color:#fff;border-color:#185FA5}
+.photo-zone{margin:12px;border:1.5px dashed #ddd;border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:#fafafa}
+.photo-zone svg{color:#ccc;margin-bottom:6px}
+.gps-box{margin:0 16px 12px;border:1px solid #eee;border-radius:10px;overflow:hidden}
+.gps-map{height:80px;background:#e4ede4;display:flex;align-items:center;justify-content:center;font-size:11px;color:#bbb;position:relative}
+.gps-actions{display:flex;border-top:1px solid #f0f0f0}
+.gps-btn{flex:1;padding:9px;font-size:11px;font-family:'Vazirmatn',sans-serif;border:none;background:#fff;cursor:pointer;color:#185FA5;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px}
+.gps-btn:first-child{border-left:1px solid #f0f0f0}
+.gps-status{font-size:10px;color:#bbb;padding:5px 10px;text-align:center;background:#fafafa;border-top:1px solid #f5f5f5}
+.cal-tag{font-size:9px;padding:2px 8px;border-radius:10px;background:#EEF4FC;color:#185FA5;font-weight:600}
+.date-inp{width:100%;border:none;outline:none;font-size:13px;font-family:'Vazirmatn',sans-serif;color:#222;background:#f8f8f8;padding:8px 12px;border-radius:8px;margin-top:6px}
+.submit-btn{width:100%;background:#185FA5;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-family:'Vazirmatn',sans-serif;font-weight:700;cursor:pointer}
+.form-sticky-bottom{position:sticky;bottom:0;background:#fff;border-top:1px solid #eee;padding:12px 16px}
 
-.ketibe-box{margin:0 18px 14px;background:#f7f9f5;border-radius:10px;padding:12px 14px;border-right:3px solid #697a60}
-.ketibe-box .kt{font-size:9px;color:#aaa;font-weight:700;letter-spacing:.3px;margin-bottom:5px}
-.ketibe-box .kv{font-size:12.5px;color:#333;line-height:1.8;font-style:italic}
-
-/* تب‌ها */
-.tabs{display:flex;border-bottom:1px solid #eee;padding:0 18px;overflow-x:auto;position:sticky;top:0;background:#fff;z-index:10}
-.tb{flex-shrink:0;padding:10px 10px;font-size:11px;color:#aaa;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap}
-.tb.act{color:#185FA5;border-bottom-color:#185FA5;font-weight:700}
-
-.tab-pane{display:none}
-.tab-pane.act{display:block}
-
-/* نقشه */
-.map-wrap{height:250px;background:#e2ebe2;position:relative;overflow:hidden}
-.mgrid{position:absolute;inset:0;background-image:linear-gradient(rgba(80,110,80,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(80,110,80,.1) 1px,transparent 1px);background-size:26px 26px}
-.mrd{position:absolute;background:rgba(255,255,255,.6)}
-.mpulse{position:absolute;top:50%;right:47%;transform:translate(50%,-50%);width:34px;height:34px;border-radius:50%;background:rgba(24,95,165,.12);border:1px solid rgba(24,95,165,.2)}
-.mpin{position:absolute;top:50%;right:47%;transform:translate(50%,-100%);display:flex;flex-direction:column;align-items:center}
-.mpin-dot{width:13px;height:13px;background:#185FA5;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-.mpin-stem{width:2px;height:7px;background:#185FA5}
-.nav-btn{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#185FA5;color:#fff;border-radius:24px;padding:9px 24px;font-size:13px;font-family:'Vazirmatn',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:0 3px 12px rgba(24,95,165,.35)}
-
-.tc{padding:16px 18px;display:flex;flex-direction:column;gap:12px}
-.wbox{background:#f4f8ff;border-radius:12px;padding:14px 16px;font-size:13px;color:#222;line-height:2;border-right:3px solid #185FA5}
-.audio{display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:12px;padding:10px 14px}
-.track{flex:1;height:3px;background:#eee;border-radius:2px;position:relative}
-.track::before{content:'';position:absolute;right:0;top:0;height:100%;width:32%;background:#185FA5;border-radius:2px}
-.biobox{background:#fffdf5;border-radius:12px;padding:14px 16px;font-size:13px;color:#333;line-height:1.9;border-right:3px solid #c8a84b}
-.bio-row{background:#f8f8f8;border-radius:10px;padding:10px 14px}
-.bio-row .bt{font-size:9px;color:#aaa;font-weight:700;letter-spacing:.3px;margin-bottom:4px}
-.bio-row .bv{font-size:12px;color:#333;line-height:1.7}
-.mem{display:flex;gap:10px}
-.mav{width:32px;height:32px;border-radius:50%;background:#ededfc;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
-.mbody{flex:1;background:#f8f8f8;border-radius:12px;padding:10px 12px}
-.mname{font-size:10.5px;color:#aaa;margin-bottom:4px;font-weight:600}
-.mtext{font-size:12px;color:#333;line-height:1.7}
-.add-mem{border:1.5px dashed #ddd;border-radius:12px;padding:12px;text-align:center;font-size:12px;color:#bbb;cursor:pointer}
-
-/* lightbox */
-.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:100;flex-direction:column;align-items:center;justify-content:center}
-.lb.show{display:flex}
-.lb-slides{width:100%;flex:1;display:flex;align-items:center;justify-content:center;position:relative}
-.lb-slide{display:none;width:100%;height:100%;align-items:center;justify-content:center}
-.lb-slide.act{display:flex}
-.lb-slide img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px}
-.lb-slide-ph{font-size:72px}
-.lb-close{position:absolute;top:16px;left:16px;color:#fff;font-size:26px;cursor:pointer;background:none;border:none;z-index:10;opacity:.8}
-.lb-arrows{display:flex;gap:16px;padding:14px 0}
-.lb-arr{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.lb-counter{color:rgba(255,255,255,.45);font-size:12px;padding-bottom:10px}
+/* لودینگ */
+.loading{position:fixed;inset:0;background:rgba(255,255,255,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:12px}
+.loading.hide{display:none}
+.spin{width:34px;height:34px;border:3px solid #eee;border-top-color:#185FA5;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style></head><body>
 <div class="screen">
+  <div class="loading" id="loading"><div class="spin"></div><p style="font-size:13px;color:#888;font-family:'Vazirmatn',sans-serif">در حال بارگذاری...</p></div>
 
-  <div class="hero" id="hero">
-    <div class="hero-slides" id="heroSlides">
-      <div class="hslide act" id="hs-0">
-        <img src="mazaar_photo.webp" alt="مزار شهیده">
-      </div>
-      <div class="hslide" id="hs-1"><div class="hslide-ph">🖼️</div></div>
-      <div class="hslide" id="hs-2"><div class="hslide-ph">🖼️</div></div>
-      <div class="hslide" id="hs-3"><div class="hslide-ph">🖼️</div></div>
-    </div>
-
-    <div class="hero-grad"></div>
-
-    <div class="topbar">
-      <span class="back">←</span>
-      <span class="ttl">مشخصات مزار</span>
-      <span class="sh">↗</span>
-    </div>
-
-    <div class="hdots" id="hdots">
-      <div class="hdot act"></div><div class="hdot"></div><div class="hdot"></div><div class="hdot"></div>
-    </div>
-
-    <!-- کتیبه روی عکس -->
-    <div class="hero-quote">
-      <div class="hq-line"></div>
-      <div class="hq-text">یاس نجیب باغی در خاک و خون تپیده<br>از نسل پاک زهراست این بانوی شهیده</div>
-    </div>
-
-    <!-- اسم + آیکون‌ها -->
-    <div class="hero-info">
-      <div class="hero-badge">🌹 شهیده</div>
-      <div class="hero-name">زهره سادات حسینی</div>
-      <div class="hero-loc">📍 تهران — گلزار شهدا</div>
-      <div class="hero-actions">
-        <div class="ha" id="ha-fateha" onclick="togAction('fateha')">
-          <div class="ha-icon"><img src="icon_fateha.png" alt="فاتحه"></div>
-          <span class="ha-num" id="n-fateha">۱۲۵</span>
-        </div>
-        <div class="ha" id="ha-visit" onclick="togAction('visit')">
-          <div class="ha-icon"><img src="icon_visit.png" alt="بازدید"></div>
-          <span class="ha-num" id="n-visit">۲۰</span>
-        </div>
-        <div class="ha" id="ha-comment" onclick="togAction('comment')">
-          <div class="ha-icon"><img src="icon_comment.png" alt="خاطره"></div>
-          <span class="ha-num" id="n-comment">۳۰</span>
-        </div>
-        <div class="ha-sep"></div>
-        <div class="ha-share">↗</div>
+  <!-- ===== صفحه اصلی ===== -->
+  <div class="page act" id="page-home">
+    <div class="home-topbar">
+      <div class="app-title">یادمان</div>
+      <div class="topbar-icons">
+        <button onclick="showPage('page-add')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
       </div>
     </div>
 
-    <div class="scroll-hint">↓</div>
-  </div>
-
-  <!-- اطلاعات -->
-  <div class="detail">
-    <div class="section">
-      <div class="sec-title">مشخصات</div>
-      <div class="timeline">
-        <div class="tl-item"><span class="tl-lbl">ولادت</span><span class="tl-val">۰۹ آذر ۱۳۶۰ — تهران</span><div class="tl-dot birth"></div></div>
-        <div class="tl-item"><span class="tl-lbl">شهادت</span><span class="tl-val">۰۲ تیر ۱۴۰۴ — تهران</span><div class="tl-dot death"></div></div>
-        <div class="tl-item"><span class="tl-lbl">محل شهادت</span><span class="tl-val">به دست رژیم صهیونیستی</span><div class="tl-dot"></div></div>
-        <div class="tl-item"><span class="tl-lbl">فرزند</span><span class="tl-val">سید رحیم</span><div class="tl-dot"></div></div>
-        <div class="tl-item"><span class="tl-lbl">کشور</span><span class="tl-val">🇮🇷 ایران</span><div class="tl-dot"></div></div>
-      </div>
-    </div>
-
-    <div style="padding:14px 18px 0">
-      <div class="ketibe-box">
-        <div class="kt">کتیبه مزار</div>
-        <div class="kv">یاس نجیب باغی در خاک و خون تپیده، از نسل پاک زهراست این بانوی شهیده، در خیمه‌ی شهادت ره برده تا سعادت، ازداغ آن شهیده خون می‌رود زدیده.</div>
-      </div>
-    </div>
-
-    <div class="tabs">
-      <div class="tb act" onclick="showTab('map',this)">🗺 نقشه</div>
-      <div class="tb" onclick="showTab('bio',this)">📖 زندگی‌نامه</div>
-      <div class="tb" onclick="showTab('wasiyat',this)">📜 وصیت‌نامه</div>
-      <div class="tb" onclick="showTab('memory',this)">💬 خاطرات</div>
-    </div>
-
-    <div id="tab-map" class="tab-pane act">
+    <div class="home-scroll">
+      <!-- نقشه کوچک -->
       <div class="map-wrap">
-        <div class="mgrid"></div>
-        <div class="mrd" style="top:43%;left:0;right:0;height:3px"></div>
-        <div class="mrd" style="top:66%;left:0;right:0;height:1.5px;opacity:.4"></div>
-        <div class="mrd" style="right:38%;top:0;bottom:0;width:3px"></div>
-        <div class="mpulse"></div>
-        <div class="mpin"><div class="mpin-dot"></div><div class="mpin-stem"></div></div>
-        <div class="nav-btn">🧭 شروع مسیریابی</div>
+        <div class="map-grid"></div>
+        <div class="map-road" style="top:43%;left:0;right:0;height:2.5px"></div>
+        <div class="map-road" style="top:66%;left:0;right:0;height:1.5px;opacity:.4"></div>
+        <div class="map-road" style="right:38%;top:0;bottom:0;width:2.5px"></div>
+        <div class="map-road" style="right:62%;top:0;bottom:0;width:1.5px;opacity:.4"></div>
+        <div class="user-pulse"></div>
+        <div class="user-dot"></div>
+        <div class="map-pins" id="mapPins"></div>
+        <div class="mode-bar">
+          <button class="mode-btn act" onclick="setMode('walk',this)" title="پیاده">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="2"/><path d="M9 19l1-6 2 3 2-3 1 6M7 12l2-3h6l2 3"/></svg>
+          </button>
+          <button class="mode-btn" onclick="setMode('bike',this)" title="دوچرخه">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="15" r="3"/><circle cx="19" cy="15" r="3"/><path d="M5 15l4-8h4l3 5H9"/></svg>
+          </button>
+          <button class="mode-btn" onclick="setMode('bus',this)" title="اتوبوس">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M3 10h18M8 18v2M16 18v2"/></svg>
+          </button>
+          <button class="mode-btn" onclick="setMode('car',this)" title="ماشین">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2M7 17h10"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
+          </button>
+          <button class="mode-btn" onclick="setMode('plane',this)" title="هواپیما">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+          <button class="mode-btn" onclick="setMode('near',this)" title="نزدیک‌ترین" style="border:1px solid #ddd">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+          </button>
+        </div>
+        <div class="radius-lbl" id="radiusLbl">شعاع ۵ کیلومتر</div>
       </div>
-    </div>
 
-    <div id="tab-bio" class="tab-pane">
-      <div class="tc">
-        <div class="biobox">زهره سادات حسینی فرزند سید رحیم، بانوی شهیده‌ای که در سال ۱۳۶۰ در تهران متولد شد. زندگی پاک و سرشار از ایمان او سرانجام به فیض شهادت رسید.</div>
-        <div class="bio-row"><div class="bt">تحصیلات</div><div class="bv">کارشناسی ارشد</div></div>
-        <div class="bio-row"><div class="bt">خانواده</div><div class="bv">فرزند سید رحیم</div></div>
+      <!-- جستجو -->
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input placeholder="جستجوی نام، شهر، عملیات..." oninput="searchMazaars(this.value)">
+        </div>
       </div>
-    </div>
 
-    <div id="tab-wasiyat" class="tab-pane">
-      <div class="tc">
-        <div class="wbox">وصیت‌نامه این شهیده در حال بارگذاری است...</div>
-        <div class="audio"><span style="font-size:20px">▶️</span><div class="track"></div><span style="font-size:11px;color:#aaa">--:--</span></div>
+      <!-- نزدیک‌ترین -->
+      <div class="section-wrap" style="background:#fff;margin-bottom:8px">
+        <div class="sec-header">
+          <span class="sec-title">نزدیک‌ترین مزارها</span>
+          <span class="sec-more">دیدن همه</span>
+        </div>
+        <div id="nearbyList"><div style="font-size:12px;color:#bbb;padding:10px 0">در حال بارگذاری...</div></div>
       </div>
-    </div>
 
-    <div id="tab-memory" class="tab-pane">
-      <div class="tc">
-        <div class="mem"><div class="mav">👤</div><div class="mbody"><div class="mname">زائر — خرداد ۱۴۰۵</div><div class="mtext">سر مزارشان رفتم. آدم احساس آرامش عجیبی می‌کنه. روحشان شاد.</div></div></div>
-        <div class="add-mem">+ افزودن خاطره</div>
+      <!-- امروز در تقویم -->
+      <div class="section-wrap">
+        <div class="sec-header">
+          <span class="sec-title">امروز در تقویم</span>
+          <span class="sec-more">دیدن همه</span>
+        </div>
+        <div class="cal-scroll" id="calScroll">
+          <div class="cal-card birth"><div class="cal-type">ولادت</div><div class="cal-name">در حال بارگذاری</div><div class="cal-date">---</div></div>
+        </div>
+      </div>
+
+      <!-- وصیت منتخب -->
+      <div class="section-wrap">
+        <div class="sec-header">
+          <span class="sec-title">وصیت‌نامه منتخب</span>
+        </div>
+        <div class="will-card">
+          <div class="will-text" id="willSelected">«برادران و خواهران عزیزم، اگر شهید شدم غم نخورید. این راهی بود که خودم انتخاب کردم...»</div>
+          <div class="will-author" id="willAuthor">شهید علی رضایی</div>
+        </div>
+      </div>
+
+      <!-- اخبار -->
+      <div class="section-wrap" style="background:#fff;margin-bottom:8px">
+        <div class="sec-header">
+          <span class="sec-title">اخبار</span>
+          <span class="sec-more">دیدن همه</span>
+        </div>
+        <div class="news-item">
+          <div class="news-img"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+          <div><div class="news-tag">یادواره</div><div class="news-title">مراسم یادواره شهدای استان تهران برگزار شد</div><div class="news-date">۱۴۰۵/۰۳/۲۷</div></div>
+        </div>
+        <div class="news-item">
+          <div class="news-img"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+          <div><div class="news-tag">تشییع</div><div class="news-title">تشییع پیکر شهید گمنام در شهر قم</div><div class="news-date">۱۴۰۵/۰۳/۲۶</div></div>
+        </div>
+        <div class="news-item">
+          <div class="news-img"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+          <div><div class="news-tag">شناسایی</div><div class="news-title">شناسایی هویت ۳ شهید گمنام دوران دفاع مقدس</div><div class="news-date">۱۴۰۵/۰۳/۲۵</div></div>
+        </div>
+      </div>
+
+      <!-- گلزارها -->
+      <div class="section-wrap">
+        <div class="sec-header">
+          <span class="sec-title">گلزارها</span>
+          <span class="sec-more">دیدن همه</span>
+        </div>
+        <div class="golzar-scroll">
+          <div class="golzar-card"><div class="golzar-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg></div><div class="golzar-name">بهشت زهرا</div><div class="golzar-count">تهران</div></div>
+          <div class="golzar-card"><div class="golzar-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg></div><div class="golzar-name">گلزار شهدا</div><div class="golzar-count">مشهد</div></div>
+          <div class="golzar-card"><div class="golzar-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg></div><div class="golzar-name">وادی السلام</div><div class="golzar-count">نجف</div></div>
+          <div class="golzar-card"><div class="golzar-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg></div><div class="golzar-name">کوه خضر</div><div class="golzar-count">قم</div></div>
+        </div>
+      </div>
+
+      <!-- آمار -->
+      <div class="section-wrap" style="padding-bottom:20px">
+        <div class="sec-header"><span class="sec-title">آمار سامانه</span></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-num" id="statMazaars">۰</div><div class="stat-label">مزار ثبت‌شده</div></div>
+          <div class="stat-card"><div class="stat-num" id="statCountries">۰</div><div class="stat-label">کشور</div></div>
+          <div class="stat-card"><div class="stat-num" id="statVisits">۰</div><div class="stat-label">بازدید</div></div>
+          <div class="stat-card"><div class="stat-num" id="statFateha">۰</div><div class="stat-label">فاتحه</div></div>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- lightbox -->
-<div class="lb" id="lb">
-  <button class="lb-close" onclick="closeLb()">✕</button>
-  <div class="lb-slides">
-    <div class="lb-slide act" id="lb-0"><img src="mazaar_photo.webp" alt="مزار"></div>
-    <div class="lb-slide" id="lb-1"><div class="lb-slide-ph">🖼️</div></div>
-    <div class="lb-slide" id="lb-2"><div class="lb-slide-ph">🖼️</div></div>
-    <div class="lb-slide" id="lb-3"><div class="lb-slide-ph">🖼️</div></div>
+  <!-- ===== صفحه مزار ===== -->
+  <div class="page" id="page-mazaar">
+    <div class="hero" id="heroSection">
+      <div class="hero-slides" id="heroSlides">
+        <div class="hslide act" id="hs-0">
+          <div class="hslide-ph">
+            <div class="stone">
+              <span class="ar">بسم الله<br>الرحمن الرحیم</span>
+              <span class="nm" id="stoneNameEl">---</span>
+              <span class="dt" id="stoneDateEl">---</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-grad"></div>
+      <div class="hero-topbar">
+        <button onclick="showPage('page-home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <span class="htitle">مشخصات مزار</span>
+        <button><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></button>
+      </div>
+      <div class="hdots" id="hdots"><div class="hdot act"></div></div>
+      <div class="hero-quote" id="heroQuote" style="display:none">
+        <div class="hq-line"></div>
+        <div class="hq-text" id="heroQuoteText"></div>
+      </div>
+      <div class="hero-info">
+        <div class="hero-badge" id="heroBadge">شهید</div>
+        <div class="hero-name" id="heroName">---</div>
+        <div class="hero-loc" id="heroLoc">---</div>
+        <div class="hero-actions">
+          <div class="ha" id="ha-fateha" onclick="togReact('fateha')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span class="ha-num" id="n-fateha">۰</span>
+          </div>
+          <div class="ha" id="ha-visit" onclick="togReact('visit')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+            <span class="ha-num" id="n-visit">۰</span>
+          </div>
+          <div class="ha" id="ha-comment" onclick="togReact('comment')">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span class="ha-num" id="n-comment">۰</span>
+          </div>
+          <div class="ha-sep"></div>
+          <div class="ha"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></div>
+        </div>
+      </div>
+      <div class="scroll-hint"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+    </div>
+    <div class="detail">
+      <div class="det-section">
+        <div class="det-title">مشخصات</div>
+        <div id="detFields"></div>
+      </div>
+      <div class="ketibe-box" id="ketibBox" style="display:none">
+        <div class="kb-title">کتیبه مزار</div>
+        <div class="kb-text" id="ketibText"></div>
+      </div>
+      <div class="det-tabs">
+        <div class="dt act" onclick="showDt('map',this)">نقشه</div>
+        <div class="dt" onclick="showDt('bio',this)">زندگی‌نامه</div>
+        <div class="dt" onclick="showDt('will',this)">وصیت‌نامه</div>
+        <div class="dt" onclick="showDt('mem',this)">خاطرات</div>
+      </div>
+      <div class="dt-pane act" id="dt-map">
+        <div class="map-mini">
+          <div class="map-grid" style="position:absolute;inset:0;background-image:linear-gradient(rgba(80,110,80,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(80,110,80,.1) 1px,transparent 1px);background-size:26px 26px"></div>
+          <div class="nav-float" onclick="openNavigation()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg> شروع مسیریابی</div>
+        </div>
+      </div>
+      <div class="dt-pane" id="dt-bio"><div class="bio-box" id="bioText">اطلاعات زندگی‌نامه ثبت نشده است.</div></div>
+      <div class="dt-pane" id="dt-will"><div class="will-box-d" id="willText">وصیت‌نامه ثبت نشده است.</div></div>
+      <div class="dt-pane" id="dt-mem">
+        <div id="memList"></div>
+        <div style="border:1.5px dashed #ddd;border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#bbb;cursor:pointer" onclick="addMemory()">+ افزودن خاطره</div>
+      </div>
+    </div>
   </div>
-  <div class="lb-arrows">
-    <button class="lb-arr" onclick="lbPrev()">›</button>
-    <button class="lb-arr" onclick="lbNext()">‹</button>
+
+  <!-- ===== صفحه اخبار ===== -->
+  <div class="page" id="page-news">
+    <div style="padding:13px 16px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <button style="background:none;border:none;cursor:pointer;color:#555;display:flex" onclick="showPage('page-home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span style="font-size:16px;font-weight:700">اخبار</span>
+    </div>
+    <div class="coming-soon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <h3>اخبار</h3>
+      <p>این بخش به زودی فعال می‌شود.<br>یادواره‌ها، تشییع شهدا و اخبار مرتبط اینجا نمایش داده می‌شود.</p>
+    </div>
   </div>
-  <div class="lb-counter" id="lb-cnt">۱ از ۴</div>
+
+  <!-- ===== صفحه مدیا ===== -->
+  <div class="page" id="page-media">
+    <div style="padding:13px 16px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <button style="background:none;border:none;cursor:pointer;color:#555;display:flex" onclick="showPage('page-home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span style="font-size:16px;font-weight:700">مدیا</span>
+    </div>
+    <div class="coming-soon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <h3>مدیا</h3>
+      <p>این بخش به زودی فعال می‌شود.<br>ویدئوها، مداحی‌ها و محتوای مرتبط با شهدا اینجا نمایش داده می‌شود.</p>
+    </div>
+  </div>
+
+  <!-- ===== صفحه ثبت ===== -->
+  <div class="page" id="page-add">
+    <div class="form-topbar">
+      <button style="background:none;border:none;cursor:pointer;color:#555;display:flex" onclick="showPage('page-home')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <span style="font-size:16px;font-weight:700;flex:1">ثبت مزار جدید</span>
+      <button style="background:transparent;color:#185FA5;border:1px solid #185FA5;border-radius:20px;padding:6px 14px;font-size:12px;font-family:'Vazirmatn',sans-serif;font-weight:600;cursor:pointer">پیش‌نویس</button>
+    </div>
+    <div class="form-body" style="overflow-y:auto;flex:1">
+      <div class="form-section">
+        <div class="form-sec-title">عکس سنگ مزار *</div>
+        <div class="photo-zone" onclick="document.getElementById('addPhotoInp').click()">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <div style="font-size:12px;color:#aaa;margin-top:6px">عکس سنگ مزار را بارگذاری کنید<br><span style="color:#185FA5;font-weight:700">انتخاب از گالری</span></div>
+        </div>
+        <input type="file" id="addPhotoInp" accept="image/*" style="display:none" onchange="previewAddPhoto(this)">
+        <div id="addPhotoPreview" style="display:none;padding:0 12px 12px"></div>
+      </div>
+      <div class="form-section">
+        <div class="form-sec-title">اطلاعات شهید</div>
+        <div class="form-field">
+          <div class="flbl">نام و نام خانوادگی *</div>
+          <input id="addName" class="finp" type="text" placeholder="مثال: علی رضایی">
+        </div>
+        <div class="form-field">
+          <div class="flbl" style="margin-bottom:8px">درجه *</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px" id="addDegreeGrid">
+            <div class="dg-chip" onclick="selDeg(this)">شهید</div>
+            <div class="dg-chip" onclick="selDeg(this)">شهیده</div>
+            <div class="dg-chip" onclick="selDeg(this)">بسیجی شهید</div>
+            <div class="dg-chip" onclick="selDeg(this)">سرباز شهید</div>
+            <div class="dg-chip" onclick="selDeg(this)">سردار شهید</div>
+            <div class="dg-chip" onclick="selDeg(this)">جانباز شهید</div>
+            <div class="dg-chip" onclick="selDeg(this)">جاوید الاثر</div>
+            <div class="dg-chip" onclick="selDeg(this)">شهید گمنام</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-sec-title">موقعیت مزار</div>
+        <div class="form-field-row">
+          <span class="flbl" style="flex-shrink:0;margin-bottom:0">کشور *</span>
+          <select id="addCountry" class="finp-inline" onchange="updateCal()">
+            <option value="">انتخاب کنید</option>
+            <option value="ir">🇮🇷 ایران</option>
+            <option value="iq">🇮🇶 عراق</option>
+            <option value="lb">🇱🇧 لبنان</option>
+            <option value="sy">🇸🇾 سوریه</option>
+            <option value="ye">🇾🇪 یمن</option>
+            <option value="af">🇦🇫 افغانستان</option>
+            <option value="ps">🇵🇸 فلسطین</option>
+            <option value="us">🇺🇸 آمریکا</option>
+            <option value="other">🌍 سایر</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <div class="flbl">نام قبرستان / گلزار *</div>
+          <input id="addCemetery" class="finp" type="text" placeholder="مثال: بهشت زهرا، گلزار شهدا">
+        </div>
+        <div class="form-field">
+          <div class="flbl">آدرس تکمیلی</div>
+          <input id="addAddress" class="finp" type="text" placeholder="قطعه — ردیف — شماره (اختیاری)">
+        </div>
+        <div class="form-field">
+          <div class="flbl" style="margin-bottom:8px">موقعیت GPS *</div>
+          <div class="gps-box">
+            <div class="gps-map" id="addGpsMap">موقعیت ثبت نشده</div>
+            <div class="gps-actions">
+              <button class="gps-btn" onclick="getGPS()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+                موقعیت فعلی
+              </button>
+              <button class="gps-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/></svg>
+                از نقشه
+              </button>
+            </div>
+            <div class="gps-status" id="addGpsStatus">یکی از دکمه‌ها را بزنید</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-sec-title">تاریخ‌ها</div>
+        <div class="form-field">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="flbl" style="margin-bottom:0">تاریخ تولد</span>
+            <span class="cal-tag" id="addCal1">شمسی</span>
+          </div>
+          <input id="addBirth" class="date-inp" type="text" placeholder="روز / ماه / سال">
+        </div>
+        <div class="form-field">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="flbl" style="margin-bottom:0">تاریخ شهادت *</span>
+            <span class="cal-tag" id="addCal2">شمسی</span>
+          </div>
+          <input id="addDeath" class="date-inp" type="text" placeholder="روز / ماه / سال">
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-sec-title">محل و دلیل شهادت</div>
+        <div class="form-field">
+          <div class="flbl">محل شهادت *</div>
+          <input id="addDeathLoc" class="finp" type="text" placeholder="مثال: تهران، خوزستان">
+        </div>
+        <div class="form-field">
+          <div class="flbl">دلیل / عملیات *</div>
+          <input id="addDeathReason" class="finp" type="text" placeholder="مثال: بمباران رژیم صهیونیستی">
+        </div>
+      </div>
+      <div class="form-section" style="margin-bottom:0">
+        <div class="form-sec-title">کتیبه مزار</div>
+        <div class="form-field">
+          <textarea id="addEpitaph" class="finp" rows="3" style="resize:none;line-height:1.9" placeholder="متن کتیبه یا شعر روی سنگ مزار..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="form-sticky-bottom">
+      <button class="submit-btn" onclick="submitMazaar()">ثبت و ارسال برای تأیید</button>
+    </div>
+  </div>
+
+  <!-- منوی پایین -->
+  <div class="bottom-nav">
+    <button class="bn act" id="bn-home" onclick="navTo('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span>نقشه</span>
+    </button>
+    <button class="bn" id="bn-search" onclick="navTo('search')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span>جستجو</span>
+    </button>
+    <button class="bn" id="bn-news" onclick="navTo('news')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      <span>اخبار</span>
+    </button>
+    <button class="bn" id="bn-media" onclick="navTo('media')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <span>مدیا</span>
+    </button>
+    <button class="bn" id="bn-profile">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>پروفایل</span>
+    </button>
+  </div>
 </div>
 
 <script>
-// ===== Hero Slider =====
-let hCur=0, hTotal=4, hTx=0;
-function goH(n){
-  document.getElementById('hs-'+hCur).classList.remove('act');
-  hCur=(n+hTotal)%hTotal;
-  document.getElementById('hs-'+hCur).classList.add('act');
-  document.querySelectorAll('.hdot').forEach((d,i)=>d.classList.toggle('act',i===hCur));
-}
-const hero=document.getElementById('hero');
-hero.addEventListener('touchstart',e=>{hTx=e.touches[0].clientX},{passive:true});
-hero.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-hTx;
-  if(Math.abs(dx)>40){dx>0?goH(hCur-1):goH(hCur+1)}
-  else if(Math.abs(dx)<8){openLb(hCur)} // کلیک = باز کن lightbox
-});
+const {createClient}=supabase;
+const sb=createClient('https://lvtosolvkmxlrreqsnzq.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dG9zb2x2a214bHJyZXFzbnpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MTc1OTgsImV4cCI6MjA5NzA5MzU5OH0.6l8Kei9gTFUCmLqdckWsH-BaqiT_DrWs46pRZ2vxvfY');
 
-// ===== Lightbox =====
-let lbCur=0, lbTotal=4, lbTx=0;
-const faNum=['۱','۲','۳','۴'];
-function openLb(i){lbCur=i||0;updLb();document.getElementById('lb').classList.add('show')}
-function closeLb(){document.getElementById('lb').classList.remove('show')}
-function lbNext(){lbCur=(lbCur+1)%lbTotal;updLb()}
-function lbPrev(){lbCur=(lbCur-1+lbTotal)%lbTotal;updLb()}
-function updLb(){
-  document.querySelectorAll('.lb-slide').forEach((s,i)=>s.classList.toggle('act',i===lbCur));
-  document.getElementById('lb-cnt').textContent=faNum[lbCur]+' از ۴';
-}
-const lb=document.getElementById('lb');
-lb.addEventListener('touchstart',e=>{lbTx=e.touches[0].clientX},{passive:true});
-lb.addEventListener('touchend',e=>{
-  const dx=e.changedTouches[0].clientX-lbTx;
-  if(Math.abs(dx)>40){dx>0?lbPrev():lbNext()}
-});
+let mazaars=[],currentMazaar=null,addGpsCoords=null;
+let reactState={fateha:false,visit:false,comment:false};
+function toFa(n){return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])}
+function hideLoading(){document.getElementById('loading').classList.add('hide')}
 
-// ===== Actions =====
-const st={fateha:false,visit:false,comment:false};
-const base={fateha:125,visit:20,comment:30};
-function toFa(n){return n.toString().replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d])}
-function togAction(k){
-  st[k]=!st[k];
-  const el=document.getElementById('ha-'+k);
-  el.classList.toggle('active',st[k]);
-  document.getElementById('n-'+k).textContent=toFa(st[k]?base[k]+1:base[k]);
-  // انیمیشن bounce
-  const icon=el.querySelector('.ha-icon');
-  icon.style.animation='none';
-  setTimeout(()=>{icon.style.animation=''},10);
-  void icon.offsetWidth;
-  icon.style.animation='bounce .35s ease';
+// ناوبری
+function navTo(tab){
+  const map={home:'page-home',search:'page-home',news:'page-news',media:'page-media'};
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.getElementById(map[tab]||'page-home').classList.add('act');
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('act'));
+  document.getElementById('bn-'+tab)?.classList.add('act');
+}
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
+  document.getElementById(id).classList.add('act');
 }
 
-// ===== Tabs =====
-function showTab(name,el){
-  document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('act'));
-  document.getElementById('tab-'+name).classList.add('act');
-  document.querySelectorAll('.tb').forEach(t=>t.classList.remove('act'));
-  if(el)el.classList.add('act');
+// بارگذاری
+async function loadMazaars(){
+  try{
+    const {data}=await sb.from('mazaars').select('*').eq('status','approved').order('created_at',{ascending:false});
+    mazaars=data||[];
+    renderNearby(mazaars);
+    renderPins(mazaars);
+    updateStats();
+    renderCalendar();
+  }catch(e){mazaars=[];renderNearby([])}
+  hideLoading();
 }
+
+function renderNearby(list){
+  const el=document.getElementById('nearbyList');
+  if(!list.length){el.innerHTML='<div style="font-size:12px;color:#bbb;padding:10px 0">هنوز مزاری ثبت نشده</div>';return}
+  el.innerHTML=list.slice(0,5).map(m=>`
+    <div class="nearby-item" onclick="openMazaar('${m.id}')">
+      <div class="ni-av ${m.degree==='شهید گمنام'?'ni-av-r':'ni-av-p'}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="ni-name">${m.degree} ${m.name}</div>
+        <div class="ni-sub">${m.cemetery}${m.address?` — ${m.address}`:''}</div>
+      </div>
+      <div class="ni-dist">${m.country==='ir'?'ایران':m.country}</div>
+    </div>`).join('');
+}
+
+function renderPins(list){
+  const el=document.getElementById('mapPins');
+  const positions=[[30,25],[45,60],[60,35],[25,70],[55,55],[70,30],[35,45],[50,20]];
+  el.innerHTML=list.slice(0,8).map((m,i)=>{
+    const [t,r]=positions[i]||[50,50];
+    const isUnknown=m.degree==='شهید گمنام';
+    return `<div class="mpin ${isUnknown?'mpin-r':'mpin-p'}" style="top:${t}%;right:${r}%" onclick="openMazaar('${m.id}')">
+      <div class="mpin-lbl">${isUnknown?'گمنام':m.name.split(' ').pop()}</div>
+      <div class="mpin-dot"></div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  document.getElementById('statMazaars').textContent=toFa(mazaars.length);
+  const countries=new Set(mazaars.map(m=>m.country));
+  document.getElementById('statCountries').textContent=toFa(countries.size);
+  const visits=mazaars.reduce((s,m)=>s+(m.visit_count||0),0);
+  document.getElementById('statVisits').textContent=toFa(visits);
+  const fateha=mazaars.reduce((s,m)=>s+(m.fateha_count||0),0);
+  document.getElementById('statFateha').textContent=toFa(fateha);
+}
+
+function renderCalendar(){
+  const el=document.getElementById('calScroll');
+  const today=new Date();
+  const todayMD=`${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+  let cards=[];
+  mazaars.forEach(m=>{
+    if(m.birth_date?.slice(-5)===todayMD) cards.push({type:'birth',name:`${m.degree} ${m.name}`,date:m.birth_date});
+    if(m.death_date?.slice(-5)===todayMD) cards.push({type:'death',name:`${m.degree} ${m.name}`,date:m.death_date});
+  });
+  if(!cards.length){el.innerHTML='<div style="font-size:12px;color:#bbb;padding:6px 0">امروز رویدادی ثبت نشده</div>';return}
+  el.innerHTML=cards.map(c=>`
+    <div class="cal-card ${c.type}">
+      <div class="cal-type">${c.type==='birth'?'ولادت':'شهادت'}</div>
+      <div class="cal-name">${c.name}</div>
+      <div class="cal-date">${c.date}</div>
+    </div>`).join('');
+}
+
+// باز کردن مزار
+function openMazaar(id){
+  const m=mazaars.find(x=>x.id===id);
+  if(!m) return;
+  currentMazaar=m;
+  document.getElementById('heroName').textContent=`${m.degree} ${m.name}`;
+  document.getElementById('heroBadge').textContent=m.degree;
+  document.getElementById('heroLoc').textContent=`${m.cemetery}${m.address?` — ${m.address}`:''}`;
+  document.getElementById('stoneNameEl').textContent=m.name;
+  document.getElementById('stoneDateEl').textContent=`${m.birth_date||'---'} — ${m.death_date}`;
+  if(m.epitaph){
+    document.getElementById('heroQuote').style.display='block';
+    document.getElementById('heroQuoteText').textContent=m.epitaph;
+    document.getElementById('ketibBox').style.display='block';
+    document.getElementById('ketibText').textContent=m.epitaph;
+  }else{
+    document.getElementById('heroQuote').style.display='none';
+    document.getElementById('ketibBox').style.display='none';
+  }
+  const fields=[['تولد',m.birth_date],['شهادت',m.death_date],['محل شهادت',m.death_location],['دلیل',m.death_reason],['کشور',m.country]].filter(f=>f[1]);
+  document.getElementById('detFields').innerHTML=fields.map(f=>`<div class="tl-item"><span class="tl-lbl">${f[0]}</span><span class="tl-val">${f[1]}</span></div>`).join('');
+  document.getElementById('bioText').textContent=m.biography||'اطلاعات زندگی‌نامه ثبت نشده است.';
+  document.getElementById('willText').textContent=m.will_text||'وصیت‌نامه ثبت نشده است.';
+  document.getElementById('n-fateha').textContent=toFa(m.fateha_count||0);
+  document.getElementById('n-visit').textContent=toFa(m.visit_count||0);
+  document.getElementById('n-comment').textContent=toFa(m.comment_count||0);
+  reactState={fateha:false,visit:false,comment:false};
+  showPage('page-mazaar');
+}
+
+async function togReact(key){
+  if(!currentMazaar) return;
+  reactState[key]=!reactState[key];
+  const base=currentMazaar[key+'_count']||0;
+  document.getElementById('n-'+key).textContent=toFa(reactState[key]?base+1:base);
+  if(reactState[key]) await sb.from('reactions').insert({mazaar_id:currentMazaar.id,type:key});
+}
+
+function searchMazaars(q){
+  if(!q.trim()){renderNearby(mazaars);return}
+  const f=mazaars.filter(m=>m.name.includes(q)||m.cemetery?.includes(q)||m.death_location?.includes(q)||m.death_reason?.includes(q));
+  renderNearby(f);
+}
+
+const modeLabels={walk:'شعاع ۵ کیلومتر',bike:'شعاع ۲۰ کیلومتر',bus:'کل شهر',car:'شعاع ۲۰۰ کیلومتر',plane:'منطقه',near:'نزدیک‌ترین شهید'};
+function setMode(mode,btn){
+  document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.remove('act');b.style.color='#666'});
+  btn.classList.add('act');btn.style.color='#fff';
+  document.getElementById('radiusLbl').textContent=modeLabels[mode];
+}
+
+function showDt(name,el){
+  document.querySelectorAll('.dt-pane').forEach(p=>p.classList.remove('act'));
+  document.getElementById('dt-'+name).classList.add('act');
+  document.querySelectorAll('.dt').forEach(t=>t.classList.remove('act'));
+  el.classList.add('act');
+}
+
+function openNavigation(){
+  if(currentMazaar?.lat&&currentMazaar?.lng) window.open(`https://www.google.com/maps/dir/?api=1&destination=${currentMazaar.lat},${currentMazaar.lng}&travelmode=driving`,'_blank');
+  else alert('موقعیت GPS برای این مزار ثبت نشده است');
+}
+
+function selDeg(el){
+  document.querySelectorAll('.dg-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+const calMap={ir:'شمسی',iq:'قمری',lb:'قمری',sy:'قمری',ye:'قمری',af:'شمسی',ps:'قمری',us:'میلادی',other:'میلادی'};
+function updateCal(){
+  const v=document.getElementById('addCountry').value;
+  const c=calMap[v]||'شمسی';
+  document.getElementById('addCal1').textContent=c;
+  document.getElementById('addCal2').textContent=c;
+}
+
+let gpsCoords=null;
+function getGPS(){
+  document.getElementById('addGpsStatus').textContent='در حال دریافت موقعیت...';
+  navigator.geolocation?.getCurrentPosition(
+    pos=>{
+      gpsCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      document.getElementById('addGpsMap').innerHTML='<span style="color:#4CAF50;font-size:18px">✓</span>';
+      document.getElementById('addGpsMap').style.background='#e8f5e9';
+      document.getElementById('addGpsStatus').textContent='✓ موقعیت ثبت شد: '+pos.coords.latitude.toFixed(4)+' , '+pos.coords.longitude.toFixed(4);
+      document.getElementById('addGpsStatus').style.color='#4CAF50';
+    },
+    ()=>{document.getElementById('addGpsStatus').textContent='خطا در دریافت موقعیت';document.getElementById('addGpsStatus').style.color='#e53935'}
+  );
+}
+
+function previewAddPhoto(input){
+  if(!input.files?.[0]) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    document.querySelector('.photo-zone').style.display='none';
+    const prev=document.getElementById('addPhotoPreview');
+    prev.style.display='block';
+    prev.innerHTML=`<img src="${e.target.result}" style="width:100%;height:140px;object-fit:cover;border-radius:10px">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function submitMazaar(){
+  const name=document.getElementById('addName').value.trim();
+  const degree=document.querySelector('.dg-chip.selected')?.textContent;
+  const country=document.getElementById('addCountry').value;
+  const cemetery=document.getElementById('addCemetery').value.trim();
+  const death_date=document.getElementById('addDeath').value.trim();
+  const death_location=document.getElementById('addDeathLoc').value.trim();
+  const death_reason=document.getElementById('addDeathReason').value.trim();
+  if(!name){alert('لطفاً نام شهید را وارد کنید');return}
+  if(!degree){alert('لطفاً درجه را انتخاب کنید');return}
+  if(!country){alert('لطفاً کشور را انتخاب کنید');return}
+  if(!cemetery){alert('لطفاً نام قبرستان را وارد کنید');return}
+  if(!death_date){alert('لطفاً تاریخ شهادت را وارد کنید');return}
+  if(!death_location){alert('لطفاً محل شهادت را وارد کنید');return}
+  if(!death_reason){alert('لطفاً دلیل شهادت را وارد کنید');return}
+  document.getElementById('loading').classList.remove('hide');
+  try{
+    const {error}=await sb.from('mazaars').insert({
+      name,degree,country,cemetery,
+      address:document.getElementById('addAddress').value.trim()||null,
+      lat:gpsCoords?.lat||null,lng:gpsCoords?.lng||null,
+      birth_date:document.getElementById('addBirth').value.trim()||null,
+      death_date,death_location,death_reason,
+      epitaph:document.getElementById('addEpitaph').value.trim()||null,
+      status:'pending'
+    });
+    if(error) throw error;
+    hideLoading();
+    alert('✓ مزار با موفقیت ثبت شد و در انتظار تأیید است');
+    showPage('page-home');
+    loadMazaars();
+  }catch(e){hideLoading();alert('خطا: '+e.message)}
+}
+
+async function addMemory(){
+  if(!currentMazaar) return;
+  const text=prompt('خاطره خود را بنویسید:');
+  if(!text) return;
+  const author=prompt('نام شما (اختیاری):')||'زائر';
+  await sb.from('memories').insert({mazaar_id:currentMazaar.id,author_name:author,content:text});
+  alert('خاطره ثبت شد');
+}
+
+loadMazaars();
 </script>
 </body></html>

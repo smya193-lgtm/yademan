@@ -13,6 +13,7 @@ html,body{width:100%;height:100%;background:#111;font-family:'Vazirmatn',Tahoma,
 /* صفحات */
 .page{display:none;flex:1;flex-direction:column;overflow:hidden}
 .page.act{display:flex}
+#page-mazaar.act{display:block}
 
 /* ===== منوی پایین ===== */
 .bottom-nav{display:flex;border-top:1px solid #eee;background:#fff;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
@@ -108,7 +109,9 @@ html,body{width:100%;height:100%;background:#111;font-family:'Vazirmatn',Tahoma,
 
 /* ===== صفحه مزار ===== */
 #page-mazaar{overflow-y:auto}
-.hero{position:relative;width:100%;height:100vh;max-height:720px;overflow:hidden}
+#page-mazaar.act{display:block!important}
+.hero{position:relative;width:100%;height:100vh;overflow:hidden;flex-shrink:0}
+@supports(height:100svh){.hero{height:100svh}}
 .hero-slides{width:100%;height:100%;position:relative}
 .hslide{position:absolute;inset:0;opacity:0;transition:opacity .35s}
 .hslide.act{opacity:1;z-index:1}
@@ -853,13 +856,32 @@ async function submitMazaar(){
   if(!death_reason){alert('لطفاً دلیل شهادت را وارد کنید');return}
   document.getElementById('loading').classList.remove('hide');
   try{
+    // آپلود عکس
+    let main_photo_url=null;
+    const photoInp=document.getElementById('addPhotoInp');
+    if(photoInp&&photoInp.files&&photoInp.files[0]){
+      const file=photoInp.files[0];
+      const ext=file.name.split('.').pop()||'jpg';
+      const fileName=`mazaar_${Date.now()}.${ext}`;
+      const {data:upData,error:upErr}=await sb.storage
+        .from('mazaar-photos')
+        .upload(fileName,file,{cacheControl:'3600',upsert:true});
+      if(upErr){
+        console.warn('خطای آپلود عکس:',upErr.message);
+      } else {
+        const {data:urlData}=sb.storage.from('mazaar-photos').getPublicUrl(fileName);
+        main_photo_url=urlData.publicUrl;
+      }
+    }
     const {error}=await sb.from('mazaars').insert({
       name,degree,country,cemetery,
       address:document.getElementById('addAddress').value.trim()||null,
-      lat:gpsCoords?.lat||null,lng:gpsCoords?.lng||null,
+      lat:addGpsCoords?.lat||null,
+      lng:addGpsCoords?.lng||null,
       birth_date:document.getElementById('addBirth').value.trim()||null,
       death_date,death_location,death_reason,
       epitaph:document.getElementById('addEpitaph').value.trim()||null,
+      main_photo_url,
       status:'pending'
     });
     if(error) throw error;

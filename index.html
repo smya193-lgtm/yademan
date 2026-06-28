@@ -689,11 +689,46 @@ function openMazaar(id){
   const m=mazaars.find(x=>x.id===id);
   if(!m) return;
   currentMazaar=m;
+
+  // نام و اطلاعات اصلی
   document.getElementById('heroName').textContent=`${m.degree} ${m.name}`;
   document.getElementById('heroBadge').textContent=m.degree;
-  document.getElementById('heroLoc').textContent=`${m.cemetery}${m.address?` — ${m.address}`:''}`;
+  document.getElementById('heroLoc').textContent=`📍 ${m.cemetery}${m.address?` — ${m.address}`:''}`;
   document.getElementById('stoneNameEl').textContent=m.name;
   document.getElementById('stoneDateEl').textContent=`${m.birth_date||'---'} — ${m.death_date}`;
+
+  // عکس مزار — اگه عکس داشت نشون بده، وگرنه سنگ مزار انیمیشنی
+  const slides = document.getElementById('heroSlides');
+  const dots = document.getElementById('hdots');
+  if(m.main_photo_url){
+    // عکس واقعی داریم
+    const photos = [m.main_photo_url, ...(m.photos||[])];
+    slides.innerHTML = photos.map((p,i)=>
+      `<div class="hslide ${i===0?'act':''}" id="hs-${i}">
+        <img src="${p}" style="width:100%;height:100%;object-fit:cover;object-position:center top" alt="مزار">
+      </div>`
+    ).join('');
+    dots.innerHTML = photos.map((_,i)=>
+      `<div class="hdot ${i===0?'act':''}"></div>`
+    ).join('');
+    hTotal = photos.length;
+  } else {
+    // بدون عکس — سنگ مزار
+    slides.innerHTML = `<div class="hslide act" id="hs-0">
+      <div class="hslide-ph">
+        <div class="stone">
+          <span class="ar">بسم الله<br>الرحمن الرحیم</span>
+          <span class="nm">${m.name}</span>
+          <span class="dt">${m.birth_date||'---'} — ${m.death_date}</span>
+        </div>
+      </div>
+    </div>`;
+    dots.innerHTML = '<div class="hdot act"></div>';
+    hTotal = 1;
+  }
+  hCur = 0;
+
+  // کتیبه روی عکس
   if(m.epitaph){
     document.getElementById('heroQuote').style.display='block';
     document.getElementById('heroQuoteText').textContent=m.epitaph;
@@ -703,14 +738,28 @@ function openMazaar(id){
     document.getElementById('heroQuote').style.display='none';
     document.getElementById('ketibBox').style.display='none';
   }
-  const fields=[['تولد',m.birth_date],['شهادت',m.death_date],['محل شهادت',m.death_location],['دلیل',m.death_reason],['کشور',m.country]].filter(f=>f[1]);
-  document.getElementById('detFields').innerHTML=fields.map(f=>`<div class="tl-item"><span class="tl-lbl">${f[0]}</span><span class="tl-val">${f[1]}</span></div>`).join('');
+
+  // اطلاعات
+  const fields=[
+    ['تولد', m.birth_date],
+    ['شهادت', m.death_date],
+    ['محل شهادت', m.death_location],
+    ['دلیل / عملیات', m.death_reason],
+    ['کشور', m.country]
+  ].filter(f=>f[1]);
+  document.getElementById('detFields').innerHTML=fields.map(f=>
+    `<div class="tl-item"><span class="tl-lbl">${f[0]}</span><span class="tl-val">${f[1]}</span></div>`
+  ).join('');
+
   document.getElementById('bioText').textContent=m.biography||'اطلاعات زندگی‌نامه ثبت نشده است.';
   document.getElementById('willText').textContent=m.will_text||'وصیت‌نامه ثبت نشده است.';
   document.getElementById('n-fateha').textContent=toFa(m.fateha_count||0);
   document.getElementById('n-visit').textContent=toFa(m.visit_count||0);
   document.getElementById('n-comment').textContent=toFa(m.comment_count||0);
   reactState={fateha:false,visit:false,comment:false};
+
+  // اسکرول به بالا
+  document.getElementById('page-mazaar').scrollTop=0;
   showPage('page-mazaar');
 }
 
